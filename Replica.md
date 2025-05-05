@@ -1,10 +1,11 @@
-## Important paths:
+# INTRO:
 
-1. /opt/homebrew/var/postgresql@17
-2. /opt/homebrew/var/log
+This repos contains details on how to setup postgres replica and replica and test it
 
-## Command
+## Steps
 
+1. Install postgres
+2. Check if role postgres exist. If not create it
 3. psql -U $(whoami) -d postgres -c "\du"
 4. CREATE ROLE postgres LOGIN SUPERUSER;
 5. Open priamry postgresql.conf
@@ -25,6 +26,13 @@
     \c test_replication;
     CREATE TABLE my_table (id SERIAL PRIMARY KEY, data TEXT);
     INSERT INTO my_table (data) VALUES ('Hello from primary!');-- On the standby server:\c test_replication;SELECT \* FROM my_table; '
-12. psql -h localhost -p 5432 -U postgres
-    psql -h localhost -p 5433 -U posgres
-    psql -h localhost -p 5433 -U postgres
+12. Now you can connect via replica server and check if it is reflecting or not.
+13. Node script is also there to test it.
+14. In node script, execute first the primary connect function and then replica function.
+
+## Important paths:
+
+1. /opt/homebrew/var/postgresql@17
+2. /opt/homebrew/var/log
+3. psql -h localhost -p 5432 -U postgres
+4. psql -h localhost -p 5433 -U postgres
