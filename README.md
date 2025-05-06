@@ -30,7 +30,7 @@ This repos contains details on how to setup postgres replica and replica and tes
 13. Node script is also there to test it.
 14. In node script, execute first the primary connect function and then replica function.
 
-## Important paths:
+## Important paths and commands:
 
 1. /opt/homebrew/var/postgresql@17
 2. /opt/homebrew/var/log
