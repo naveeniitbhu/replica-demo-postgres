@@ -6,7 +6,7 @@ async function connectToPrimary(connectionConfig) {
     await client.connect();
     const res = await client.query('SELECT * from my_table;');
     console.log('Connected to PostgreSQL!', res.rows[0]);
-    const insertRes = await client.query("INSERT INTO my_table (data) VALUES ('Testing Insert - 3')")
+    const insertRes = await client.query("INSERT INTO my_table (data) VALUES ('Testing Insert - 5')")
     console.log('Insert Status', insertRes.rowCount);
     const tableRes = await client.query('SELECT * from my_table;');
     console.log('Retrieving db: ', tableRes.rows);
@@ -48,5 +48,5 @@ const standbyConfig = {
   database: 'test_replication'
 };
 
-// connectToPrimary(primaryConfig);
+connectToPrimary(primaryConfig);
 connectToReplica(standbyConfig); // You can connect to the standby for read operations
