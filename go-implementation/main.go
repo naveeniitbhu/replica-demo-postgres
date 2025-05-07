@@ -22,15 +22,8 @@ func connectToPrimary(connectionConfig string) {
 	}
 	fmt.Println("Connected to Primary PostgreSQL!")
 
-	// var version string
-	// err = db.QueryRow("SELECT version()").Scan(&version)
-	// if err != nil {
-	// 		log.Fatalf("Error executing simple query: %v", err)
-	// }
-	// fmt.Println("PostgreSQL version:", version)
-
 	// Perform a SELECT query
-	rows, err := db.Query(`SELECT * FROM public."my_table"`)
+	rows, err := db.Query(`SELECT * FROM my_table`)
 	if err != nil {
 		log.Fatalf("Error executing SELECT query on Primary: %v", err)
 	}
@@ -43,29 +36,26 @@ func connectToPrimary(connectionConfig string) {
 	}
 	fmt.Println("Column Names:", columnNames)
 
-	var columns []interface{}
-	columnTypes, err := rows.ColumnTypes()
-	if err != nil {
-		log.Fatalf("Error getting column types: %v", err)
-	}
-	for range columnTypes {
-		var val interface{}
-		columns = append(columns, &val)
+	var columns = make([]interface{}, len(columnNames))
+	columnPointers := make([]interface{}, len(columnNames))
+	for i := range columns {
+		columnPointers[i] = &columns[i]
 	}
 
-	if rows.Next() {
-		err = rows.Scan(columns...)
+	fmt.Println("Data:")
+	for rows.Next() {
+		err := rows.Scan(columnPointers...)
 		if err != nil {
 			log.Fatalf("Error scanning row from Primary: %v", err)
 		}
-		fmt.Println("Retrieved from Primary:", columns)
+		fmt.Println(columns)
 	}
 	if err = rows.Err(); err != nil {
 		log.Fatalf("Error iterating through rows from Primary: %v", err)
 	}
 
 	// Perform an INSERT query
-	result, err := db.Exec("INSERT INTO my_table (data) VALUES ($1)", "Testing Insert - 3")
+	result, err := db.Exec(`INSERT INTO my_table (data) VALUES ($1)`, "Testing Insert - 6")
 	if err != nil {
 		log.Fatalf("Error executing INSERT query on Primary: %v", err)
 	}
@@ -76,19 +66,31 @@ func connectToPrimary(connectionConfig string) {
 	fmt.Println("Insert Status:", rowsAffected)
 
 	// Perform another SELECT query to see the inserted data
-	tableRows, err := db.Query("SELECT * FROM my_table")
+	tableRows, err := db.Query(`SELECT * FROM my_table`)
 	if err != nil {
 		log.Fatalf("Error executing second SELECT query on Primary: %v", err)
 	}
 	defer tableRows.Close()
 
+	// Get column names again (they should be the same)
+	tableColumnNames, err := tableRows.Columns()
+	if err != nil {
+		log.Fatalf("Error getting column names for second select: %v", err)
+	}
+	fmt.Println("Column Names (Second Select):", tableColumnNames)
+
 	fmt.Println("Retrieving db:")
+	var tableColumns = make([]interface{}, len(tableColumnNames))
+	tableColumnPointers := make([]interface{}, len(tableColumnNames))
+	for i := range tableColumns {
+		tableColumnPointers[i] = &tableColumns[i]
+	}
 	for tableRows.Next() {
-		err = tableRows.Scan(columns...) // Re-use the columns slice
+		err := tableRows.Scan(tableColumnPointers...)
 		if err != nil {
 			log.Fatalf("Error scanning row during second select from Primary: %v", err)
 		}
-		fmt.Println(columns)
+		fmt.Println(tableColumns)
 	}
 	if err = tableRows.Err(); err != nil {
 		log.Fatalf("Error iterating through rows during second select from Primary: %v", err)
@@ -110,28 +112,32 @@ func connectToReplica(connectionConfig string) {
 	fmt.Println("Connected to Replica PostgreSQL!")
 
 	// Perform a SELECT query
-	rows, err := db.Query("SELECT * FROM my_table")
+	rows, err := db.Query(`SELECT * FROM my_table`)
 	if err != nil {
 		log.Fatalf("Error executing SELECT query on Replica: %v", err)
 	}
 	defer rows.Close()
 
-	var columns []interface{}
-	columnTypes, err := rows.ColumnTypes()
+	// Get column names
+	columnNames, err := rows.Columns()
 	if err != nil {
-		log.Fatalf("Error getting column types from Replica: %v", err)
+		log.Fatalf("Error getting column names from Replica: %v", err)
 	}
-	for range columnTypes {
-		var val interface{}
-		columns = append(columns, &val)
+	fmt.Println("Column Names (Replica):", columnNames)
+
+	var columns = make([]interface{}, len(columnNames))
+	columnPointers := make([]interface{}, len(columnNames))
+	for i := range columns {
+		columnPointers[i] = &columns[i]
 	}
 
+	fmt.Println("Data from Replica:")
 	for rows.Next() {
-		err = rows.Scan(columns...)
+		err := rows.Scan(columnPointers...)
 		if err != nil {
 			log.Fatalf("Error scanning row from Replica: %v", err)
 		}
-		fmt.Println("Retrieved from Replica:", columns)
+		fmt.Println(columns)
 	}
 	if err = rows.Err(); err != nil {
 		log.Fatalf("Error iterating through rows from Replica: %v", err)
@@ -143,8 +149,8 @@ func main() {
 	primaryConfig := "host=localhost port=5432 user=postgres password='' dbname=test_replication sslmode=disable" // Replace with your password if set
 
 	// Connection string for the standby server
-	// standbyConfig := "host=localhost port=5433 user=postgres password= dbname=test_replication sslmode=disable" // If you used a different port for the standby
+	standbyConfig := "host=localhost port=5433 user=postgres password='' dbname=test_replication sslmode=disable" // If you used a different port for the standby
 
 	connectToPrimary(primaryConfig)
-	// connectToReplica(standbyConfig) // You can connect to the standby for read operations
+	connectToReplica(standbyConfig) // You can connect to the standby for read operations
 }
