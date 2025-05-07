@@ -12,6 +12,7 @@ This repos contains details on how to setup postgres replica and replica and tes
    listen_addresses = '\*' # Listen on all interfaces (for local testing, 'localhost' is also fine)
    wal_level = replica # Enable logical decoding as well (required for streaming replication)
    max_wal_senders = 5 # Maximum concurrent connections for sending WAL
+   Nore: max_wal_senders should be same in both replica and primary
    wal_keep_size = 1GB # Minimum size of WAL files to keep for standby servers
    max_wal_timeout = 600s
 6. Open pg_hba.conf
