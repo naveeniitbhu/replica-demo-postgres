@@ -1,7 +1,7 @@
-# INTRO:
+## INTRO:
 
 This repos contains details on how to setup postgres replica and replica and test it
-
+Implemented in both golang and node
 ## Steps
 
 1. Install postgres
